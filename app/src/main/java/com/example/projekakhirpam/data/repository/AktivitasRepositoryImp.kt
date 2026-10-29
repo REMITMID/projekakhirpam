@@ -25,7 +25,8 @@ class AktivitasRepositoryImpl(private val supabase: SupabaseClient) : AktivitasR
     }
 
     override suspend fun updateAktivitas(id: String, item: AktivitasKampus): Result<Unit> = runCatching {
-        supabase.postgrest["aktivitas_kampus"].update(item.toDto()) {
+        val dto = item.toDto()
+        supabase.postgrest["aktivitas_kampus"].update(dto) {
             filter { eq("id", id) }
         }
     }

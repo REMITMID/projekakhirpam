@@ -11,8 +11,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.projekakhirpam.core.network.SupabaseProvider
 import com.example.projekakhirpam.data.repository.AktivitasRepositoryImpl
 import com.example.projekakhirpam.data.repository.AuthRepositoryImpl
+import com.example.projekakhirpam.data.repository.ReferensiRepositoryImpl
 import com.example.projekakhirpam.presentation.aktivitas.AktivitasViewModel
 import com.example.projekakhirpam.presentation.auth.AuthViewModel
+import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,21 +22,21 @@ class MainActivity : ComponentActivity() {
 
         val authRepository = AuthRepositoryImpl(SupabaseProvider.client)
         val aktivitasRepository = AktivitasRepositoryImpl(SupabaseProvider.client)
+        val referensiRepository = ReferensiRepositoryImpl(SupabaseProvider.client)
 
         val authViewModel = AuthViewModel(authRepository)
         val aktivitasViewModel = AktivitasViewModel(aktivitasRepository)
+        val referensiViewModel = ReferensiViewModel(referensiRepository)
 
         setContent {
             MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
+                Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
                     AppNavigation(
                         navController = navController,
                         authViewModel = authViewModel,
                         aktivitasViewModel = aktivitasViewModel,
+                        referensiViewModel = referensiViewModel,
                         authRepository = authRepository
                     )
                 }

@@ -25,7 +25,7 @@ class AuthRepositoryImpl(private val supabase: SupabaseClient) : AuthRepository 
         User(id = user.id, email = user.email ?: "")
     }
 
-    override fun getCurrentUser(): User? {
+    override suspend fun getCurrentUser(): User? {
         val user = supabase.auth.currentUserOrNull()
         return user?.let { User(id = it.id, email = it.email ?: "") }
     }
