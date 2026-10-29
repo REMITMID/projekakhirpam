@@ -36,4 +36,8 @@ class AuthViewModel(private val repository: AuthRepository) : ViewModel() {
                 .onFailure { _authState.value = AuthState.Error(it.message ?: "pendaftaran gagal") }
         }
     }
+
+    fun resetAuthState() {
+        _authState.value = AuthState.Idle
+    }
 }
