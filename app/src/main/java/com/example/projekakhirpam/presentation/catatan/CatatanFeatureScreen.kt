@@ -17,6 +17,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 import androidx.lifecycle.ViewModel
@@ -24,11 +25,13 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.projekakhirpam.domain.repository.CatatanRepository
+import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatatanFeatureScreen(
-    repository: CatatanRepository
+    repository: CatatanRepository,
+    onNavigateRoute: (String) -> Unit
 ) {
 
     // Inisialisasi ViewModel
@@ -114,6 +117,7 @@ fun CatatanFeatureScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = {
@@ -129,7 +133,8 @@ fun CatatanFeatureScreen(
                                 else
                                     "Edit Catatan"
                             }
-                        }
+                        },
+                        style = MaterialTheme.typography.titleLarge
                     )
                 },
                 navigationIcon = {
@@ -141,17 +146,35 @@ fun CatatanFeatureScreen(
                             )
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
-        }
+        },
+        bottomBar = { AksaBottomNavigation("catatan_list", onNavigateRoute) }
     ) { padding ->
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .imePadding()
+                .padding(horizontal = 20.dp, vertical = 12.dp)
         ) {
+
+            Text(
+                text = when (page) {
+                    "semester" -> "Kelola catatan berdasarkan semester."
+                    "matkul" -> "Mata kuliah semester ${state.semester}"
+                    "pertemuan" -> "$mataKuliahNama · Semester ${state.semester}"
+                    "catatan" -> "$mataKuliahNama · Pertemuan $pertemuanNomor"
+                    else -> "$mataKuliahNama · Pertemuan $pertemuanNomor"
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(Modifier.height(16.dp))
 
             if (state.loading) {
                 LinearProgressIndicator(
@@ -179,70 +202,50 @@ fun CatatanFeatureScreen(
                 // =========================
 
                 "semester" -> {
-
-                    Text(
-                        "Pilih semester",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    var expanded by remember {
-                        mutableStateOf(false)
-                    }
-
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = {
-                            expanded = it
-                        }
+                    Text("Pilih semester", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(10.dp))
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(bottom = 12.dp)
                     ) {
-
-                        OutlinedTextField(
-                            value = "Semester ${state.semester}",
-                            onValueChange = {},
-                            readOnly = true,
-                            label = { Text("Semester") },
-                            trailingIcon = {
-                                ExposedDropdownMenuDefaults
-                                    .TrailingIcon(expanded)
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .menuAnchor()
-                        )
-
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = {
-                                expanded = false
-                            }
-                        ) {
-                            (1..8).forEach { semester ->
-
-                                DropdownMenuItem(
-                                    text = {
-                                        Text("Semester $semester")
-                                    },
-                                    onClick = {
-                                        expanded = false
-                                        vm.pilihSemester(semester)
+                        items((1..8).toList()) { semester ->
+                            ElevatedCard(
+                                onClick = {
+                                    vm.pilihSemester(semester)
+                                    page = "matkul"
+                                },
+                                enabled = !state.loading,
+                                shape = MaterialTheme.shapes.medium,
+                                colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                ) {
+                                    Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.primaryContainer) {
+                                        Text(
+                                            semester.toString(),
+                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                                            color = MaterialTheme.colorScheme.primary,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold
+                                        )
                                     }
-                                )
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Semester $semester", style = MaterialTheme.typography.titleMedium)
+                                        Text(
+                                            if (semester == state.semester) "${state.mataKuliah.size} mata kuliah tersedia" else "Pilih untuk melihat mata kuliah",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    Text("›", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                                }
                             }
                         }
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Button(
-                        onClick = {
-                            page = "matkul"
-                        },
-                        enabled = !state.loading,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Lihat Mata Kuliah")
                     }
                 }
 
@@ -258,7 +261,7 @@ fun CatatanFeatureScreen(
                             dialog = "tambah_matkul"
                         }
                     ) {
-                        Text("+ Tambah Mata Kuliah")
+                        Text("Tambah Mata Kuliah")
                     }
 
                     Spacer(Modifier.height(12.dp))
@@ -270,8 +273,10 @@ fun CatatanFeatureScreen(
                     }
 
                     LazyColumn(
+                        modifier = Modifier.weight(1f),
                         verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
+                            Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(bottom = 12.dp)
                     ) {
 
                         items(
@@ -311,7 +316,7 @@ fun CatatanFeatureScreen(
                             dialog = "tambah_pertemuan"
                         }
                     ) {
-                        Text("+ Tambah Pertemuan")
+                        Text("Tambah Pertemuan")
                     }
 
                     Spacer(Modifier.height(12.dp))
@@ -324,8 +329,10 @@ fun CatatanFeatureScreen(
                     }
 
                     LazyColumn(
+                        modifier = Modifier.weight(1f),
                         verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
+                            Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(bottom = 12.dp)
                     ) {
 
                         items(
@@ -371,7 +378,7 @@ fun CatatanFeatureScreen(
                             page = "form"
                         }
                     ) {
-                        Text("+ Tambah Catatan")
+                        Text("Tambah Catatan")
                     }
 
                     Spacer(Modifier.height(12.dp))
@@ -383,8 +390,10 @@ fun CatatanFeatureScreen(
                     }
 
                     LazyColumn(
+                        modifier = Modifier.weight(1f),
                         verticalArrangement =
-                            Arrangement.spacedBy(8.dp)
+                            Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(bottom = 12.dp)
                     ) {
 
                         items(
@@ -427,6 +436,7 @@ fun CatatanFeatureScreen(
                             Text("Judul Catatan")
                         },
                         singleLine = true,
+                        shape = MaterialTheme.shapes.small,
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -443,7 +453,8 @@ fun CatatanFeatureScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        minLines = 6
+                        minLines = 6,
+                        shape = MaterialTheme.shapes.small
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -466,7 +477,7 @@ fun CatatanFeatureScreen(
 
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Simpan Catatan")
+                        Text(if (catatanEditId == null) "Simpan Catatan" else "Simpan Perubahan")
                     }
                 }
             }
@@ -612,17 +623,16 @@ fun CatatanFeatureScreen(
 
 @Composable
 private fun EmptyMessage(message: String) {
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(24.dp),
-
-        contentAlignment = Alignment.Center
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Text(
             message,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.fillMaxWidth().padding(20.dp)
         )
     }
 }
@@ -640,13 +650,15 @@ private fun CatatanItemCard(
 ) {
 
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
 
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -672,7 +684,8 @@ private fun CatatanItemCard(
 
                 Text(
                     "Ketuk untuk membuka",
-                    style = MaterialTheme.typography.labelSmall
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
 

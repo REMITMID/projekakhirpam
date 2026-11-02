@@ -11,9 +11,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.projekakhirpam.domain.repository.AuthRepository
+import com.example.projekakhirpam.domain.repository.CatatanRepository
 import com.example.projekakhirpam.presentation.aktivitas.*
 import com.example.projekakhirpam.presentation.auth.*
+import com.example.projekakhirpam.presentation.catatan.CatatanFeatureScreen
 import com.example.projekakhirpam.presentation.home.HomeScreen
+import com.example.projekakhirpam.presentation.home.MoreFeaturesScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiDetailScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiFormScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiListScreen
@@ -26,7 +29,8 @@ fun AppNavigation(
     authViewModel: AuthViewModel,
     aktivitasViewModel: AktivitasViewModel,
     referensiViewModel: ReferensiViewModel,
-    authRepository: AuthRepository
+    authRepository: AuthRepository,
+    catatanRepository: CatatanRepository
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf("login") }
@@ -36,6 +40,14 @@ fun AppNavigation(
         // Jika sudah login, langsung buka HALAMAN UTAMA (home)
         startDestination = if (currentUser != null) "home" else "login"
         isLoading = false
+    }
+
+    fun navigateToMain(route: String) {
+        navController.navigate(route) {
+            popUpTo("home") { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 
     if (isLoading) {
@@ -81,15 +93,23 @@ fun AppNavigation(
                             popUpTo(0) { inclusive = true }
                         }
                     },
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateRoute = { route -> navigateToMain(route) }
                 )
             }
 
             // --- HALAMAN UTAMA (DASHBOARD 6 MENU) ---
             composable("home") {
                 HomeScreen(
-                    onNavigateToFeature = { route -> navController.navigate(route) },
-                    onProfileClick = { navController.navigate("profile") }
+                    currentRoute = "home",
+                    onNavigateToFeature = { route -> navigateToMain(route) },
+                    onProfileClick = { navigateToMain("profile") }
+                )
+            }
+            composable("more") {
+                MoreFeaturesScreen(
+                    onNavigateRoute = { route -> navigateToMain(route) },
+                    onProfileClick = { navigateToMain("profile") }
                 )
             }
 
@@ -97,6 +117,7 @@ fun AppNavigation(
             composable("referensi_list") {
                 ReferensiListScreen(
                     viewModel = referensiViewModel,
+                    onNavigateRoute = { route -> navigateToMain(route) },
                     onNavigateToDetail = { referensiId ->
                         navController.navigate("referensi_detail/$referensiId")
                     },
@@ -129,13 +150,22 @@ fun AppNavigation(
                 )
             }
 
-            // --- FITUR 6: AKTIVITAS KAMPUS (FITUR SEBELUMNYA) ---
+            // --- FITUR CATATAN AKADEMIK ---
+            composable("catatan_list") {
+                CatatanFeatureScreen(
+                    repository = catatanRepository,
+                    onNavigateRoute = { route -> navigateToMain(route) }
+                )
+            }
+
+            // --- FITUR AKTIVITAS KAMPUS ---
             composable("aktivitas_list") {
                 AktivitasListScreen(
                     viewModel = aktivitasViewModel,
                     onAddClick = { navController.navigate("aktivitas_form") },
                     onItemClick = { item -> navController.navigate("aktivitas_detail/${item.id}") },
-                    onProfileClick = { navController.navigate("profile") }
+                    onProfileClick = { navigateToMain("profile") },
+                    onNavigateRoute = { route -> navigateToMain(route) }
                 )
             }
             composable("aktivitas_form") {
@@ -185,7 +215,6 @@ fun AppNavigation(
             // --- PLACEHOLDER FITUR TEMAN KELOMPOK LAIN (FITUR 1-4) ---
             composable("tugas_list") { PlaceholderScreen("Manajemen Tugas Kuliah") }
             composable("jadwal_list") { PlaceholderScreen("Jadwal Perkuliahan") }
-            composable("catatan_list") { PlaceholderScreen("Catatan Akademik") }
             composable("dosen_list") { PlaceholderScreen("Direktori Dosen") }
         }
     }

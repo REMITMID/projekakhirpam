@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.projekakhirpam.domain.model.AktivitasKampus
+import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -21,7 +22,8 @@ fun AktivitasListScreen(
     viewModel: AktivitasViewModel,
     onAddClick: () -> Unit,
     onItemClick: (AktivitasKampus) -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onNavigateRoute: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -40,7 +42,8 @@ fun AktivitasListScreen(
             FloatingActionButton(onClick = onAddClick) {
                 Icon(Icons.Default.Add, contentDescription = "tambah")
             }
-        }
+        },
+        bottomBar = { AksaBottomNavigation("aktivitas_list", onNavigateRoute) }
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val current = state) {

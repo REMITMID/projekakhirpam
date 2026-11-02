@@ -1,13 +1,21 @@
 package com.example.projekakhirpam.presentation.profile
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.projekakhirpam.domain.model.User
 import com.example.projekakhirpam.domain.repository.AuthRepository
+import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -15,7 +23,8 @@ import kotlinx.coroutines.launch
 fun ProfileScreen(
     authRepository: AuthRepository,
     onLogout: () -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onNavigateRoute: (String) -> Unit
 ) {
     var user by remember { mutableStateOf<User?>(null) }
     val scope = rememberCoroutineScope()
@@ -25,46 +34,76 @@ fun ProfileScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
-                title = { Text("profil pengguna") },
+                title = { Text("Profil") },
                 navigationIcon = {
-                    TextButton(onClick = onBackClick) { Text("kembali") }
-                }
+                    IconButton(onClick = onBackClick) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
-        }
+        },
+        bottomBar = { AksaBottomNavigation("profile", onNavigateRoute) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Card(modifier = Modifier.fillMaxWidth()) {
+            Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
+                Icon(
+                    Icons.Default.Person,
+                    contentDescription = "Avatar pengguna",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(22.dp).size(44.dp)
+                )
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Profil Mahasiswa", style = MaterialTheme.typography.titleLarge)
+                Text("Informasi akun demo AKSA", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+            ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    Text("informasi akun", style = MaterialTheme.typography.titleLarge)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text("email: ${user?.email ?: "-"}")
-                    Text("user ID: ${user?.id ?: "-"}")
+                    Text("Informasi akun", style = MaterialTheme.typography.titleMedium)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Email", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(user?.email ?: "Memuat…", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline)
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("ID pengguna", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(user?.id ?: "—", style = MaterialTheme.typography.bodyMedium)
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-            Button(
+            OutlinedButton(
                 onClick = {
                     scope.launch {
                         authRepository.logout()
                         onLogout()
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                shape = MaterialTheme.shapes.small,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
             ) {
-                Text("keluar / logout")
+                Text("Keluar dari akun")
             }
         }
     }
