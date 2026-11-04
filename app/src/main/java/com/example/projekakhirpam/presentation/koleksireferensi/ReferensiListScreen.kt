@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.projekakhirpam.domain.model.Referensi
-import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,7 +32,6 @@ fun ReferensiListScreen(
                 Icon(Icons.Default.Add, contentDescription = "Tambah Referensi")
             }
         },
-        bottomBar = { AksaBottomNavigation("referensi_list", onNavigateRoute) }
     ) { padding ->
         Box(
             modifier = Modifier

@@ -10,6 +10,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
+import com.example.projekakhirpam.presentation.components.aksaOutlinedTextFieldColors
 
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,7 +26,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 import com.example.projekakhirpam.domain.repository.CatatanRepository
-import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +98,24 @@ fun CatatanFeatureScreen(
 
     // Memuat mata kuliah semester awal
     LaunchedEffect(Unit) {
-        vm.pilihSemester(1)
+        val recentNote = RecentCatatanStore.consumeOpenRequest()
+        if (recentNote == null) {
+            vm.pilihSemester(1)
+        } else {
+            mataKuliahId = recentNote.mataKuliahId
+            mataKuliahNama = recentNote.mataKuliahNama
+            pertemuanId = recentNote.pertemuanId
+            pertemuanNomor = recentNote.pertemuanNomor
+            catatanEditId = recentNote.id
+            judul = recentNote.judul
+            isi = recentNote.isi
+            page = "form"
+            vm.bukaCatatanLangsung(
+                semester = recentNote.semester,
+                mataKuliahId = recentNote.mataKuliahId,
+                pertemuanId = recentNote.pertemuanId
+            )
+        }
     }
 
     // Navigasi kembali
@@ -152,7 +169,6 @@ fun CatatanFeatureScreen(
                 )
             )
         },
-        bottomBar = { AksaBottomNavigation("catatan_list", onNavigateRoute) }
     ) { padding ->
 
         Column(
@@ -229,7 +245,7 @@ fun CatatanFeatureScreen(
                                         Text(
                                             semester.toString(),
                                             modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold
                                         )
@@ -242,7 +258,7 @@ fun CatatanFeatureScreen(
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     }
-                                    Text("›", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
+                                    Text("›", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
                                 }
                             }
                         }
@@ -406,6 +422,18 @@ fun CatatanFeatureScreen(
                                 subtitle = catatan.isi,
 
                                 onClick = {
+                                    RecentCatatanStore.markOpened(
+                                        RecentCatatan(
+                                            id = catatan.id,
+                                            judul = catatan.judul,
+                                            isi = catatan.isi,
+                                            mataKuliahId = mataKuliahId,
+                                            mataKuliahNama = mataKuliahNama,
+                                            semester = state.semester,
+                                            pertemuanId = pertemuanId,
+                                            pertemuanNomor = pertemuanNomor
+                                        )
+                                    )
                                     catatanEditId = catatan.id
                                     judul = catatan.judul
                                     isi = catatan.isi
@@ -437,6 +465,7 @@ fun CatatanFeatureScreen(
                         },
                         singleLine = true,
                         shape = MaterialTheme.shapes.small,
+                        colors = aksaOutlinedTextFieldColors(),
                         modifier = Modifier.fillMaxWidth()
                     )
 
@@ -454,7 +483,8 @@ fun CatatanFeatureScreen(
                             .fillMaxWidth()
                             .weight(1f),
                         minLines = 6,
-                        shape = MaterialTheme.shapes.small
+                        shape = MaterialTheme.shapes.small,
+                        colors = aksaOutlinedTextFieldColors()
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -470,7 +500,25 @@ fun CatatanFeatureScreen(
                                 id = catatanEditId,
                                 judul = judul,
                                 isi = isi
-                            ) {
+                            ) { updatedCatatan ->
+                                val savedNote = updatedCatatan.firstOrNull { it.id == catatanEditId }
+                                    ?: updatedCatatan.firstOrNull {
+                                        it.judul == judul.trim() && it.isi == isi.trim()
+                                    }
+                                savedNote?.let { note ->
+                                    RecentCatatanStore.markOpened(
+                                        RecentCatatan(
+                                            id = note.id,
+                                            judul = note.judul,
+                                            isi = note.isi,
+                                            mataKuliahId = mataKuliahId,
+                                            mataKuliahNama = mataKuliahNama,
+                                            semester = state.semester,
+                                            pertemuanId = pertemuanId,
+                                            pertemuanNomor = pertemuanNomor
+                                        )
+                                    )
+                                }
                                 page = "catatan"
                             }
                         },
@@ -529,6 +577,7 @@ fun CatatanFeatureScreen(
                                     "Nomor Pertemuan"
                             )
                         },
+                        colors = aksaOutlinedTextFieldColors(),
                         keyboardOptions = KeyboardOptions(
                             keyboardType =
                                 if (kind == "tambah_pertemuan")
@@ -573,12 +622,18 @@ fun CatatanFeatureScreen(
                             }
 
                             "hapus_matkul" -> {
+                                RecentCatatanStore.recent
+                                    ?.takeIf { it.mataKuliahId == hapusId }
+                                    ?.let { RecentCatatanStore.forget(it.id) }
                                 vm.hapusMataKuliah(hapusId) {
                                     dialog = ""
                                 }
                             }
 
                             "hapus_pertemuan" -> {
+                                RecentCatatanStore.recent
+                                    ?.takeIf { it.pertemuanId == hapusId }
+                                    ?.let { RecentCatatanStore.forget(it.id) }
                                 vm.hapusPertemuan(
                                     mataKuliahId,
                                     hapusId
@@ -592,6 +647,7 @@ fun CatatanFeatureScreen(
                                     pertemuanId,
                                     hapusId
                                 ) {
+                                    RecentCatatanStore.forget(hapusId)
                                     dialog = ""
                                 }
                             }
@@ -685,7 +741,7 @@ private fun CatatanItemCard(
                 Text(
                     "Ketuk untuk membuka",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 

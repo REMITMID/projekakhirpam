@@ -1,20 +1,41 @@
 package com.example.projekakhirpam.presentation.home
 
+import android.text.format.DateUtils
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.EditNote
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
-import com.example.projekakhirpam.presentation.components.AksaFeatureIcon
+import com.example.projekakhirpam.presentation.catatan.RecentCatatan
+import com.example.projekakhirpam.presentation.catatan.RecentCatatanStore
 
 data class FeatureMenuItem(
     val title: String,
@@ -25,21 +46,15 @@ data class FeatureMenuItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    currentRoute: String,
-    onNavigateToFeature: (String) -> Unit,
+    onOpenCatatan: () -> Unit,
+    onOpenRecentNote: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    val menuItems = listOf(
-        FeatureMenuItem("Tugas Kuliah", "Kelola tugas dan tenggat waktu.", "tugas_list"),
-        FeatureMenuItem("Jadwal Kuliah", "Lihat agenda perkuliahan.", "jadwal_list"),
-        FeatureMenuItem("Catatan Akademik", "Simpan materi dan poin penting kuliah.", "catatan_list"),
-        FeatureMenuItem("Direktori Dosen", "Cari informasi dan kontak dosen.", "dosen_list"),
-        FeatureMenuItem("Koleksi Referensi", "Atur jurnal, buku, dan artikel.", "referensi_list"),
-        FeatureMenuItem("Aktivitas Kampus", "Jelajahi kegiatan dan organisasimu.", "aktivitas_list")
-    )
+    val colors = MaterialTheme.colorScheme
+    val recentNote = RecentCatatanStore.recent
 
     Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = colors.background,
         topBar = {
             TopAppBar(
                 title = { Text("AKSA", fontWeight = FontWeight.Bold) },
@@ -48,105 +63,133 @@ fun HomeScreen(
                         Icon(Icons.Default.Person, contentDescription = "Buka profil")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = colors.background)
             )
-        },
-        bottomBar = {
-            AksaBottomNavigation(currentRoute) { route ->
-                if (route == "profile") onProfileClick() else onNavigateToFeature(route)
-            }
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(start = 20.dp, top = 12.dp, end = 20.dp, bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = 20.dp, top = 18.dp, end = 20.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
             item {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Halo, Mahasiswa!", style = MaterialTheme.typography.titleLarge)
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Halo, Mahasiswa!", style = MaterialTheme.typography.headlineMedium)
                     Text(
-                        "Kelola aktivitas kuliahmu hari ini.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        "Lanjutkan belajar dari catatan terakhir yang kamu buka.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.onSurfaceVariant
                     )
                 }
             }
+
             item {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        AksaFeatureIcon(
-                            route = "catatan_list",
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(36.dp)
-                        )
-                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                "Semua kebutuhan kuliah dalam satu tempat",
-                                style = MaterialTheme.typography.titleMedium.copy(fontSize = 18.sp),
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                            Text(
-                                "Kelola catatan, referensi, dan aktivitas kampusmu dengan lebih mudah.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
-                        }
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Catatan terakhir", style = MaterialTheme.typography.titleLarge)
+                    if (recentNote == null) {
+                        EmptyRecentNoteCard(onClick = onOpenCatatan)
+                    } else {
+                        RecentNoteCard(note = recentNote, onClick = onOpenRecentNote)
                     }
                 }
             }
-            item {
-                Text("Akses cepat", style = MaterialTheme.typography.titleLarge)
+        }
+    }
+}
+
+@Composable
+private fun RecentNoteCard(note: RecentCatatan, onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        border = BorderStroke(1.dp, colors.outlineVariant.copy(alpha = 0.5f)),
+        colors = CardDefaults.cardColors(containerColor = colors.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = colors.primaryContainer
+            ) {
+                Icon(
+                    imageVector = Icons.Default.EditNote,
+                    contentDescription = null,
+                    tint = colors.onPrimaryContainer,
+                    modifier = Modifier.padding(12.dp).size(24.dp)
+                )
             }
-            items(menuItems) { item ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onNavigateToFeature(item.route) },
-                    shape = MaterialTheme.shapes.medium,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        Surface(
-                            shape = MaterialTheme.shapes.small,
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            AksaFeatureIcon(
-                                route = item.route,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(12.dp)
-                            )
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(item.title, style = MaterialTheme.typography.titleMedium)
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                item.description,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Text("›", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.primary)
-                    }
-                }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    "TERAKHIR DIBUKA / DIEDIT",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant
+                )
+                Text(note.judul, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(
+                    "${note.mataKuliahNama} · Semester ${note.semester} · Pertemuan ${note.pertemuanNomor}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    note.isi,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurface,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    "${DateUtils.getRelativeTimeSpanString(note.lastOpenedAt, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)} · Ketuk untuk melanjutkan",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant
+                )
             }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = "Buka catatan terakhir",
+                tint = colors.onSurfaceVariant,
+                modifier = Modifier.padding(top = 4.dp).size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyRecentNoteCard(onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(containerColor = colors.surfaceVariant)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(18.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(shape = MaterialTheme.shapes.medium, color = colors.surface) {
+                Icon(
+                    imageVector = Icons.Default.EditNote,
+                    contentDescription = null,
+                    tint = colors.onSurface,
+                    modifier = Modifier.padding(12.dp).size(24.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Belum ada catatan terakhir", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Buka Catatan Akademik untuk mulai menulis atau melanjutkan catatan.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onSurfaceVariant
+                )
+            }
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Buka Catatan Akademik")
         }
     }
 }

@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.projekakhirpam.domain.model.User
 import com.example.projekakhirpam.domain.repository.AuthRepository
-import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +45,6 @@ fun ProfileScreen(
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         },
-        bottomBar = { AksaBottomNavigation("profile", onNavigateRoute) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -61,7 +59,7 @@ fun ProfileScreen(
                 Icon(
                     Icons.Default.Person,
                     contentDescription = "Avatar pengguna",
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(22.dp).size(44.dp)
                 )
             }
