@@ -11,11 +11,14 @@ import com.example.projekakhirpam.core.network.SupabaseProvider
 import com.example.projekakhirpam.data.repository.AktivitasRepositoryImpl
 import com.example.projekakhirpam.data.repository.AuthRepositoryImpl
 import com.example.projekakhirpam.data.repository.DemoCatatanRepository
+import com.example.projekakhirpam.data.repository.DemoDosenRepository
 import com.example.projekakhirpam.data.repository.DemoReferensiRepository
 import com.example.projekakhirpam.presentation.aktivitas.AktivitasViewModel
 import com.example.projekakhirpam.presentation.auth.AuthViewModel
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
+import com.example.projekakhirpam.presentation.dosen.DosenViewModel
 import com.example.projekakhirpam.presentation.theme.AksaTheme
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,7 +45,6 @@ class MainActivity : ComponentActivity() {
                         referensiViewModel = referensiViewModel,
                         authRepository = authRepository,
                         catatanRepository = catatanRepository,
-                        dosenViewModel = dosenViewModel
                     )
                 }
             }
