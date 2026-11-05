@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.projekakhirpam.presentation.components.aksaOutlinedTextFieldColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,6 +30,7 @@ fun ReferensiFormScreen(
                 value = judul,
                 onValueChange = { judul = it },
                 label = { Text("Judul Referensi") },
+                colors = aksaOutlinedTextFieldColors(),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -36,6 +38,7 @@ fun ReferensiFormScreen(
                 value = penulis,
                 onValueChange = { penulis = it },
                 label = { Text("Penulis") },
+                colors = aksaOutlinedTextFieldColors(),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
@@ -43,6 +46,7 @@ fun ReferensiFormScreen(
                 value = kategori,
                 onValueChange = { kategori = it },
                 label = { Text("Kategori (Jurnal/Buku/Web)") },
+                colors = aksaOutlinedTextFieldColors(),
                 modifier = Modifier.fillMaxWidth()
             )
             // Tambahkan TextField lain untuk Tahun, URL, dan Catatan

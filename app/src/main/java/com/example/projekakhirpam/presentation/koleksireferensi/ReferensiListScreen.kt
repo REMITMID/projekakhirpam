@@ -2,6 +2,7 @@ package com.example.projekakhirpam.presentation.koleksireferensi
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -16,11 +17,13 @@ import com.example.projekakhirpam.domain.model.Referensi
 @Composable
 fun ReferensiListScreen(
     viewModel: ReferensiViewModel,
+    onNavigateRoute: (String) -> Unit,
     onNavigateToDetail: (Int) -> Unit,
     onNavigateToAdd: () -> Unit
 ) {
     val referensiList by viewModel.referensiList.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("Koleksi Referensi") }) },
@@ -28,20 +31,33 @@ fun ReferensiListScreen(
             FloatingActionButton(onClick = onNavigateToAdd) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah Referensi")
             }
-        }
+        },
     ) { padding ->
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.padding(padding))
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp)
-            ) {
-                items(referensiList) { referensi ->
-                    ReferensiCard(referensi = referensi, onClick = { onNavigateToDetail(referensi.id) })
-                    Spacer(modifier = Modifier.height(8.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            when {
+                isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                error != null -> Text(
+                    text = error ?: "Gagal memuat referensi",
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+                referensiList.isEmpty() -> Text(
+                    text = "Belum ada referensi. Tekan + untuk menambahkan.",
+                    modifier = Modifier.align(Alignment.Center)
+                )
+                else -> LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                ) {
+                    items(referensiList) { referensi ->
+                        ReferensiCard(referensi = referensi, onClick = { onNavigateToDetail(referensi.id) })
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
                 }
             }
         }

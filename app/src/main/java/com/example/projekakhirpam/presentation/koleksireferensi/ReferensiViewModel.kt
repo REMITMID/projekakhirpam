@@ -7,6 +7,7 @@ import com.example.projekakhirpam.domain.repository.ReferensiRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ReferensiViewModel(private val repository: ReferensiRepository) : ViewModel() {
@@ -17,6 +18,9 @@ class ReferensiViewModel(private val repository: ReferensiRepository) : ViewMode
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     init {
         loadReferensi()
     }
@@ -24,12 +28,13 @@ class ReferensiViewModel(private val repository: ReferensiRepository) : ViewMode
     fun loadReferensi() {
         viewModelScope.launch {
             _isLoading.value = true
+            _error.value = null
             try {
-                repository.getSemuaReferensi().collect { data ->
-                    _referensiList.value = data
-                }
+                // Ambil snapshot pertama. Repository demo memakai StateFlow yang
+                // tidak selesai, sehingga collect() membuat loading terus aktif.
+                _referensiList.value = repository.getSemuaReferensi().first()
             } catch (e: Exception) {
-                // Tangani error di sini (misal: tampilkan Snackbar)
+                _error.value = e.message ?: "Gagal memuat data referensi"
             } finally {
                 _isLoading.value = false
             }
@@ -40,6 +45,21 @@ class ReferensiViewModel(private val repository: ReferensiRepository) : ViewMode
         viewModelScope.launch {
             repository.hapusReferensi(id)
             loadReferensi() // Refresh data setelah dihapus
+        }
+    }
+
+    fun getReferensiById(id: Int, onLoaded: (Referensi?) -> Unit) {
+        viewModelScope.launch {
+            onLoaded(repository.getReferensiById(id))
+        }
+    }
+
+    fun simpanReferensi(referensi: Referensi, onSaved: () -> Unit) {
+        viewModelScope.launch {
+            if (referensi.id == 0) repository.tambahReferensi(referensi)
+            else repository.updateReferensi(referensi)
+            loadReferensi()
+            onSaved()
         }
     }
 }

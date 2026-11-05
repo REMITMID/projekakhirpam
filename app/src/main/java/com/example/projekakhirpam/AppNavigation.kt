@@ -2,23 +2,36 @@ package com.example.projekakhirpam
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projekakhirpam.presentation.dosen.DosenDetailScreen
+import com.example.projekakhirpam.presentation.dosen.DosenFormScreen
+import com.example.projekakhirpam.presentation.dosen.DosenListScreen
+import com.example.projekakhirpam.presentation.dosen.DosenViewModel
 import com.example.projekakhirpam.domain.repository.AuthRepository
+import com.example.projekakhirpam.domain.repository.CatatanRepository
 import com.example.projekakhirpam.presentation.aktivitas.*
 import com.example.projekakhirpam.presentation.auth.*
+import com.example.projekakhirpam.presentation.catatan.CatatanFeatureScreen
+import com.example.projekakhirpam.presentation.catatan.RecentCatatanStore
 import com.example.projekakhirpam.presentation.home.HomeScreen
+import com.example.projekakhirpam.presentation.home.MoreFeaturesScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiDetailScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiFormScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiListScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
 import com.example.projekakhirpam.presentation.profile.ProfileScreen
+import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 
 @Composable
 fun AppNavigation(
@@ -26,16 +39,34 @@ fun AppNavigation(
     authViewModel: AuthViewModel,
     aktivitasViewModel: AktivitasViewModel,
     referensiViewModel: ReferensiViewModel,
-    authRepository: AuthRepository
+    authRepository: AuthRepository,
+    catatanRepository: CatatanRepository,
+    dosenViewModel: DosenViewModel = viewModel()
 ) {
     var isLoading by remember { mutableStateOf(true) }
-    var startDestination by remember { mutableStateOf("login") }
+    var startDestination by remember { mutableStateOf("welcome") }
 
     LaunchedEffect(Unit) {
         val currentUser = authRepository.getCurrentUser()
         // Jika sudah login, langsung buka HALAMAN UTAMA (home)
-        startDestination = if (currentUser != null) "home" else "login"
+        startDestination = if (currentUser != null) "home" else "welcome"
         isLoading = false
+    }
+
+    fun navigateToMain(route: String) {
+        navController.navigate(route) {
+            // Main tabs open their root destination. In particular, Layanan must
+            // show the feature grid instead of restoring its last opened feature.
+            popUpTo("home") { inclusive = false }
+            launchSingleTop = true
+        }
+    }
+
+    fun navigateToFeature(route: String) {
+        navController.navigate(route) {
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 
     if (isLoading) {
@@ -43,9 +74,32 @@ fun AppNavigation(
             CircularProgressIndicator()
         }
     } else {
-        NavHost(navController = navController, startDestination = startDestination) {
+        val backStackEntry by navController.currentBackStackEntryAsState()
+        val currentRoute = backStackEntry?.destination?.route.orEmpty()
+        val showMainNavigation = currentRoute !in setOf("splash", "welcome", "login", "signup")
+
+        Box(modifier = Modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            startDestination = startDestination,
+            modifier = Modifier.fillMaxSize().padding(bottom = if (showMainNavigation) 122.dp else 0.dp)
+        ) {
 
             // --- AUTH & PROFILE ---
+            composable("welcome") {
+                WelcomeScreen(
+                    onSignIn = {
+                        navController.navigate("login") {
+                            launchSingleTop = true
+                        }
+                    },
+                    onSignUp = {
+                        navController.navigate("signup") {
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
             composable("login") {
                 LoginScreen(
                     viewModel = authViewModel,
@@ -53,10 +107,13 @@ fun AppNavigation(
                         aktivitasViewModel.loadAktivitas()
                         referensiViewModel.loadReferensi()
                         navController.navigate("home") {
-                            popUpTo("login") { inclusive = true }
+                            popUpTo("welcome") { inclusive = true }
                         }
                     },
-                    onNavigateToSignUp = { navController.navigate("signup") }
+                    onNavigateToSignUp = {
+                        navController.navigate("signup") { launchSingleTop = true }
+                    },
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("signup") {
@@ -66,10 +123,16 @@ fun AppNavigation(
                         aktivitasViewModel.loadAktivitas()
                         referensiViewModel.loadReferensi()
                         navController.navigate("home") {
-                            popUpTo("signup") { inclusive = true }
+                            popUpTo("welcome") { inclusive = true }
                         }
                     },
-                    onNavigateToLogin = { navController.navigate("login") }
+                    onNavigateToLogin = {
+                        navController.navigate("login") {
+                            popUpTo("signup") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable("profile") {
@@ -81,15 +144,26 @@ fun AppNavigation(
                             popUpTo(0) { inclusive = true }
                         }
                     },
-                    onBackClick = { navController.popBackStack() }
+                    onBackClick = { navController.popBackStack() },
+                    onNavigateRoute = { route -> navigateToMain(route) }
                 )
             }
 
             // --- HALAMAN UTAMA (DASHBOARD 6 MENU) ---
             composable("home") {
                 HomeScreen(
-                    onNavigateToFeature = { route -> navController.navigate(route) },
-                    onProfileClick = { navController.navigate("profile") }
+                    onOpenCatatan = { navigateToFeature("catatan_list") },
+                    onOpenRecentNote = {
+                        RecentCatatanStore.requestOpenRecent()
+                        navigateToFeature("catatan_list")
+                    },
+                    onProfileClick = { navigateToMain("profile") }
+                )
+            }
+            composable("more") {
+                MoreFeaturesScreen(
+                    onNavigateRoute = { route -> navigateToFeature(route) },
+                    onProfileClick = { navigateToMain("profile") }
                 )
             }
 
@@ -97,6 +171,7 @@ fun AppNavigation(
             composable("referensi_list") {
                 ReferensiListScreen(
                     viewModel = referensiViewModel,
+                    onNavigateRoute = { route -> navigateToMain(route) },
                     onNavigateToDetail = { referensiId ->
                         navController.navigate("referensi_detail/$referensiId")
                     },
@@ -129,13 +204,22 @@ fun AppNavigation(
                 )
             }
 
-            // --- FITUR 6: AKTIVITAS KAMPUS (FITUR SEBELUMNYA) ---
+            // --- FITUR CATATAN AKADEMIK ---
+            composable("catatan_list") {
+                CatatanFeatureScreen(
+                    repository = catatanRepository,
+                    onNavigateRoute = { route -> navigateToMain(route) }
+                )
+            }
+
+            // --- FITUR AKTIVITAS KAMPUS ---
             composable("aktivitas_list") {
                 AktivitasListScreen(
                     viewModel = aktivitasViewModel,
                     onAddClick = { navController.navigate("aktivitas_form") },
                     onItemClick = { item -> navController.navigate("aktivitas_detail/${item.id}") },
-                    onProfileClick = { navController.navigate("profile") }
+                    onProfileClick = { navigateToMain("profile") },
+                    onNavigateRoute = { route -> navigateToMain(route) }
                 )
             }
             composable("aktivitas_form") {
@@ -185,8 +269,67 @@ fun AppNavigation(
             // --- PLACEHOLDER FITUR TEMAN KELOMPOK LAIN (FITUR 1-4) ---
             composable("tugas_list") { PlaceholderScreen("Manajemen Tugas Kuliah") }
             composable("jadwal_list") { PlaceholderScreen("Jadwal Perkuliahan") }
-            composable("catatan_list") { PlaceholderScreen("Catatan Akademik") }
-            composable("dosen_list") { PlaceholderScreen("Direktori Dosen") }
+            // --- FITUR 4: DIREKTORI DOSEN ---
+            composable("dosen_list") {
+                DosenListScreen(
+                    viewModel = dosenViewModel,
+                    onNavigateToDetail = { dosenId ->
+                        navController.navigate("dosen_detail/$dosenId")
+                    },
+                    onNavigateToAdd = {
+                        navController.navigate("dosen_form")
+                    },
+                    onProfileClick = { navigateToMain("profile") },
+                    onNavigateRoute = { route -> navigateToMain(route) }
+                )
+            }
+            composable("dosen_detail/{id}") { backStackEntry ->
+                val dosenId = backStackEntry.arguments?.getString("id").orEmpty()
+                DosenDetailScreen(
+                    dosenId = dosenId,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { editId ->
+                        navController.navigate("dosen_form?id=$editId")
+                    }
+                )
+            }
+            composable("dosen_form?id={id}") { backStackEntry ->
+                val dosenId = backStackEntry.arguments?.getString("id")
+                DosenFormScreen(
+                    dosenId = dosenId,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable("dosen_form") {
+                DosenFormScreen(
+                    dosenId = null,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
+            if (showMainNavigation) {
+                AksaBottomNavigation(
+                    selectedRoute = when (currentRoute) {
+                        "home" -> "home"
+                        "profile" -> "profile"
+                        else -> "more"
+                    },
+                    onNavigate = { route ->
+                        when (route) {
+                            "home", "profile", "more" -> navigateToMain(route)
+                            else -> {
+                                navController.navigate(route) {
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            }
+                        }
+                    }
+                )
+            }
         }
     }
 }

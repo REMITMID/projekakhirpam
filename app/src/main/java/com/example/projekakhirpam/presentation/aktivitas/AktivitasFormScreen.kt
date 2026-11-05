@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.projekakhirpam.domain.model.AktivitasKampus
+import com.example.projekakhirpam.presentation.components.aksaOutlinedTextFieldColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,13 +43,13 @@ fun AktivitasFormScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            OutlinedTextField(value = judul, onValueChange = { judul = it }, label = { Text("judul kegiatan") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = kategori, onValueChange = { kategori = it }, label = { Text("kategori") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = tanggal, onValueChange = { tanggal = it }, label = { Text("tanggal pelaksanaan") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = lokasi, onValueChange = { lokasi = it }, label = { Text("lokasi") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = penyelenggara, onValueChange = { penyelenggara = it }, label = { Text("penyelenggara") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = status, onValueChange = { status = it }, label = { Text("status partisipasi") }, modifier = Modifier.fillMaxWidth())
-            OutlinedTextField(value = deskripsi, onValueChange = { deskripsi = it }, label = { Text("deskripsi") }, modifier = Modifier.fillMaxWidth(), minLines = 3)
+            OutlinedTextField(value = judul, onValueChange = { judul = it }, label = { Text("judul kegiatan") }, colors = aksaOutlinedTextFieldColors(), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = kategori, onValueChange = { kategori = it }, label = { Text("kategori") }, colors = aksaOutlinedTextFieldColors(), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = tanggal, onValueChange = { tanggal = it }, label = { Text("tanggal pelaksanaan") }, colors = aksaOutlinedTextFieldColors(), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = lokasi, onValueChange = { lokasi = it }, label = { Text("lokasi") }, colors = aksaOutlinedTextFieldColors(), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = penyelenggara, onValueChange = { penyelenggara = it }, label = { Text("penyelenggara") }, colors = aksaOutlinedTextFieldColors(), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = status, onValueChange = { status = it }, label = { Text("status partisipasi") }, colors = aksaOutlinedTextFieldColors(), modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = deskripsi, onValueChange = { deskripsi = it }, label = { Text("deskripsi") }, colors = aksaOutlinedTextFieldColors(), modifier = Modifier.fillMaxWidth(), minLines = 3)
 
             Spacer(modifier = Modifier.height(16.dp))
             Button(

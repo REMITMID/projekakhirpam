@@ -21,7 +21,8 @@ fun AktivitasListScreen(
     viewModel: AktivitasViewModel,
     onAddClick: () -> Unit,
     onItemClick: (AktivitasKampus) -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onNavigateRoute: (String) -> Unit
 ) {
     val state by viewModel.uiState.collectAsState()
 
@@ -40,7 +41,7 @@ fun AktivitasListScreen(
             FloatingActionButton(onClick = onAddClick) {
                 Icon(Icons.Default.Add, contentDescription = "tambah")
             }
-        }
+        },
     ) { padding ->
         Box(modifier = Modifier.padding(padding).fillMaxSize()) {
             when (val current = state) {

@@ -144,6 +144,23 @@ class CatatanViewModel(
 
     // CATATAN
 
+    fun bukaCatatanLangsung(
+        semester: Int,
+        mataKuliahId: String,
+        pertemuanId: String
+    ) = task {
+        val mataKuliah = repo.mataKuliah(semester)
+        val pertemuan = repo.pertemuan(mataKuliahId)
+        val catatan = repo.catatan(pertemuanId)
+
+        _ui.value = _ui.value.copy(
+            semester = semester,
+            mataKuliah = mataKuliah,
+            pertemuan = pertemuan,
+            catatan = catatan
+        )
+    }
+
     fun bukaPertemuan(id: String) = task {
         _ui.value = _ui.value.copy(
             catatan = emptyList()
@@ -159,7 +176,7 @@ class CatatanViewModel(
         id: String?,
         judul: String,
         isi: String,
-        selesai: () -> Unit
+        selesai: (List<CatatanAkademik>) -> Unit
     ) = task {
         require(judul.isNotBlank()) {
             "Judul catatan wajib diisi"
@@ -176,11 +193,10 @@ class CatatanViewModel(
             isi
         )
 
-        _ui.value = _ui.value.copy(
-            catatan = repo.catatan(pertemuanId)
-        )
+        val updatedCatatan = repo.catatan(pertemuanId)
+        _ui.value = _ui.value.copy(catatan = updatedCatatan)
 
-        selesai()
+        selesai(updatedCatatan)
     }
 
     fun hapusCatatan(
