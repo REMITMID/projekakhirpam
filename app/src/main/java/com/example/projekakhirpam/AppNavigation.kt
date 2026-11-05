@@ -30,6 +30,11 @@ import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiDetailS
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiFormScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiListScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
+import com.example.projekakhirpam.presentation.jadwal.JadwalDetailScreen
+import com.example.projekakhirpam.presentation.jadwal.JadwalFormScreen
+import com.example.projekakhirpam.presentation.jadwal.JadwalListScreen
+import com.example.projekakhirpam.presentation.jadwal.JadwalUiState
+import com.example.projekakhirpam.presentation.jadwal.JadwalViewModel
 import com.example.projekakhirpam.presentation.profile.ProfileScreen
 import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
 import com.example.projekakhirpam.presentation.tugas.*
@@ -43,7 +48,8 @@ fun AppNavigation(
     authRepository: AuthRepository,
     catatanRepository: CatatanRepository,
     dosenViewModel: DosenViewModel = viewModel(),
-    tugasViewModel: TugasViewModel = viewModel(factory = TugasViewModel.Factory)
+    tugasViewModel: TugasViewModel = viewModel(factory = TugasViewModel.Factory),
+    jadwalViewModel: JadwalViewModel = viewModel(factory = JadwalViewModel.Factory)
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf("welcome") }
@@ -327,7 +333,62 @@ fun AppNavigation(
                 }
             }
 
-            composable("jadwal_list") { PlaceholderScreen("Jadwal Perkuliahan") }
+            composable("jadwal_list") {
+                JadwalListScreen(
+                    onAddClick = { navController.navigate("jadwal_form") },
+                    onItemClick = { item -> navController.navigate("jadwal_detail/${item.id}") },
+                    onProfileClick = { navigateToMain("profile") },
+                    onNavigateRoute = { route -> navigateToMain(route) },
+                    viewModel = jadwalViewModel
+                )
+            }
+            composable("jadwal_form") {
+                JadwalFormScreen(
+                    onSubmit = { item ->
+                        jadwalViewModel.addJadwal(item) { navController.popBackStack() }
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("jadwal_detail/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id").orEmpty()
+                val state by jadwalViewModel.uiState.collectAsState()
+                val jadwal = (state as? JadwalUiState.Success)?.list?.find { it.id == id }
+                if (jadwal != null) {
+                    JadwalDetailScreen(
+                        item = jadwal,
+                        onEditClick = { navController.navigate("jadwal_edit/${jadwal.id}") },
+                        onDeleteClick = {
+                            jadwalViewModel.deleteJadwal(jadwal.id) { navController.popBackStack() }
+                        },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (state is JadwalUiState.Success) Text("Jadwal tidak ditemukan")
+                        else CircularProgressIndicator()
+                    }
+                }
+            }
+            composable("jadwal_edit/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id").orEmpty()
+                val state by jadwalViewModel.uiState.collectAsState()
+                val jadwal = (state as? JadwalUiState.Success)?.list?.find { it.id == id }
+                if (jadwal != null) {
+                    JadwalFormScreen(
+                        initialData = jadwal,
+                        onSubmit = { updated ->
+                            jadwalViewModel.updateJadwal(id, updated) { navController.popBackStack() }
+                        },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (state is JadwalUiState.Success) Text("Jadwal tidak ditemukan")
+                        else CircularProgressIndicator()
+                    }
+                }
+            }
             // --- FITUR 4: DIREKTORI DOSEN ---
             composable("dosen_list") {
                 DosenListScreen(
