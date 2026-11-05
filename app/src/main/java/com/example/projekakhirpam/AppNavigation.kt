@@ -13,6 +13,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projekakhirpam.presentation.dosen.DosenDetailScreen
+import com.example.projekakhirpam.presentation.dosen.DosenFormScreen
+import com.example.projekakhirpam.presentation.dosen.DosenListScreen
+import com.example.projekakhirpam.presentation.dosen.DosenViewModel
 import com.example.projekakhirpam.domain.repository.AuthRepository
 import com.example.projekakhirpam.domain.repository.CatatanRepository
 import com.example.projekakhirpam.presentation.aktivitas.*
@@ -35,7 +40,8 @@ fun AppNavigation(
     aktivitasViewModel: AktivitasViewModel,
     referensiViewModel: ReferensiViewModel,
     authRepository: AuthRepository,
-    catatanRepository: CatatanRepository
+    catatanRepository: CatatanRepository,
+    dosenViewModel: DosenViewModel = viewModel()
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf("welcome") }
@@ -263,7 +269,46 @@ fun AppNavigation(
             // --- PLACEHOLDER FITUR TEMAN KELOMPOK LAIN (FITUR 1-4) ---
             composable("tugas_list") { PlaceholderScreen("Manajemen Tugas Kuliah") }
             composable("jadwal_list") { PlaceholderScreen("Jadwal Perkuliahan") }
-            composable("dosen_list") { PlaceholderScreen("Direktori Dosen") }
+            // --- FITUR 4: DIREKTORI DOSEN ---
+            composable("dosen_list") {
+                DosenListScreen(
+                    viewModel = dosenViewModel,
+                    onNavigateToDetail = { dosenId ->
+                        navController.navigate("dosen_detail/$dosenId")
+                    },
+                    onNavigateToAdd = {
+                        navController.navigate("dosen_form")
+                    },
+                    onProfileClick = { navigateToMain("profile") },
+                    onNavigateRoute = { route -> navigateToMain(route) }
+                )
+            }
+            composable("dosen_detail/{id}") { backStackEntry ->
+                val dosenId = backStackEntry.arguments?.getString("id").orEmpty()
+                DosenDetailScreen(
+                    dosenId = dosenId,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { editId ->
+                        navController.navigate("dosen_form?id=$editId")
+                    }
+                )
+            }
+            composable("dosen_form?id={id}") { backStackEntry ->
+                val dosenId = backStackEntry.arguments?.getString("id")
+                DosenFormScreen(
+                    dosenId = dosenId,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable("dosen_form") {
+                DosenFormScreen(
+                    dosenId = null,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
             if (showMainNavigation) {
                 AksaBottomNavigation(
