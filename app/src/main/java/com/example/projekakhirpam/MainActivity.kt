@@ -41,7 +41,8 @@ class MainActivity : ComponentActivity() {
                         aktivitasViewModel = aktivitasViewModel,
                         referensiViewModel = referensiViewModel,
                         authRepository = authRepository,
-                        catatanRepository = catatanRepository
+                        catatanRepository = catatanRepository,
+                        dosenViewModel = dosenViewModel
                     )
                 }
             }
