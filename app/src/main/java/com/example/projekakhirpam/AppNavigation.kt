@@ -32,6 +32,7 @@ import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiListScr
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
 import com.example.projekakhirpam.presentation.profile.ProfileScreen
 import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
+import com.example.projekakhirpam.presentation.tugas.*
 
 @Composable
 fun AppNavigation(
@@ -41,7 +42,8 @@ fun AppNavigation(
     referensiViewModel: ReferensiViewModel,
     authRepository: AuthRepository,
     catatanRepository: CatatanRepository,
-    dosenViewModel: DosenViewModel = viewModel()
+    dosenViewModel: DosenViewModel = viewModel(),
+    tugasViewModel: TugasViewModel = viewModel(factory = TugasViewModel.Factory)
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf("welcome") }
@@ -267,7 +269,64 @@ fun AppNavigation(
             }
 
             // --- PLACEHOLDER FITUR TEMAN KELOMPOK LAIN (FITUR 1-4) ---
-            composable("tugas_list") { PlaceholderScreen("Manajemen Tugas Kuliah") }
+            // --- FITUR 1: MANAJEMEN TUGAS KULIAH ---
+            composable("tugas_list") {
+                TugasListScreen(
+                    viewModel = tugasViewModel,
+                    onAddClick = { navController.navigate("tugas_form") },
+                    onItemClick = { item -> navController.navigate("tugas_detail/${item.id}") },
+                    onProfileClick = { navigateToMain("profile") }
+                )
+            }
+            composable("tugas_form") {
+                TugasFormScreen(
+                    viewModel = tugasViewModel,
+                    onSaved = { navController.popBackStack() },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("tugas_detail/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id")
+                val state by tugasViewModel.uiState.collectAsState()
+                PesanErrorToast(tugasViewModel)
+                val tugas = (state as? TugasUiState.Success)?.list?.find { it.id == id }
+                if (tugas != null) {
+                    TugasDetailScreen(
+                        tugas = tugas,
+                        onEditClick = { navController.navigate("tugas_edit/${tugas.id}") },
+                        onDeleteClick = {
+                            tugas.id?.let { itemId ->
+                                tugasViewModel.deleteTugas(itemId) { navController.popBackStack() }
+                            }
+                        },
+                        onStatusChange = { statusBaru -> tugasViewModel.ubahStatus(tugas, statusBaru) },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (state is TugasUiState.Success) Text("Tugas tidak ditemukan")
+                        else CircularProgressIndicator()
+                    }
+                }
+            }
+            composable("tugas_edit/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id")
+                val state by tugasViewModel.uiState.collectAsState()
+                val tugas = (state as? TugasUiState.Success)?.list?.find { it.id == id }
+                if (tugas != null) {
+                    TugasFormScreen(
+                        viewModel = tugasViewModel,
+                        initialData = tugas,
+                        onSaved = { navController.popBackStack() },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+
             composable("jadwal_list") { PlaceholderScreen("Jadwal Perkuliahan") }
             // --- FITUR 4: DIREKTORI DOSEN ---
             composable("dosen_list") {
