@@ -7,6 +7,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.projekakhirpam.data.repository.DemoDosenRepository
+import com.example.projekakhirpam.data.repository.DosenRepositoryImpl
 import com.example.projekakhirpam.domain.model.Dosen
 import com.example.projekakhirpam.domain.repository.DosenRepository
 import kotlinx.coroutines.CancellationException
@@ -61,6 +62,29 @@ class DosenViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = DosenUiState(isLoading = true)
     )
+
+    init {
+        loadDosen()
+    }
+
+    fun loadDosen() {
+        viewModelScope.launch {
+            _status.update { it.copy(isLoading = true, errorMessage = null) }
+            try {
+                if (repository is DosenRepositoryImpl) {
+                    repository.refresh()
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _status.update {
+                    it.copy(errorMessage = e.message ?: "Gagal memuat data dosen")
+                }
+            } finally {
+                _status.update { it.copy(isLoading = false) }
+            }
+        }
+    }
 
     fun onQueryChange(newQuery: String) {
         query = newQuery

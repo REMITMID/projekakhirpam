@@ -114,6 +114,7 @@ fun AppNavigation(
                     onLoginSuccess = {
                         aktivitasViewModel.loadAktivitas()
                         referensiViewModel.loadReferensi()
+                        dosenViewModel.loadDosen()
                         navController.navigate("home") {
                             popUpTo("welcome") { inclusive = true }
                         }
@@ -222,7 +223,9 @@ fun AppNavigation(
 
             // --- FITUR AKTIVITAS KAMPUS ---
             composable("aktivitas_list") {
+                val aktivitasState by aktivitasViewModel.uiState.collectAsState()
                 AktivitasListScreen(
+                    state = aktivitasState,
                     viewModel = aktivitasViewModel,
                     onAddClick = { navController.navigate("aktivitas_form") },
                     onItemClick = { item -> navController.navigate("aktivitas_detail/${item.id}") },

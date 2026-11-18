@@ -13,6 +13,7 @@ import com.example.projekakhirpam.data.repository.AuthRepositoryImpl
 import com.example.projekakhirpam.data.repository.DemoCatatanRepository
 import com.example.projekakhirpam.data.repository.DemoDosenRepository
 import com.example.projekakhirpam.data.repository.DemoReferensiRepository
+import com.example.projekakhirpam.data.repository.DosenRepositoryImpl
 import com.example.projekakhirpam.presentation.aktivitas.AktivitasViewModel
 import com.example.projekakhirpam.presentation.auth.AuthViewModel
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
@@ -29,10 +30,12 @@ class MainActivity : ComponentActivity() {
         val aktivitasRepository = AktivitasRepositoryImpl(supabase)
         val referensiRepository = DemoReferensiRepository()
         val catatanRepository = DemoCatatanRepository()
+        val dosenRepository = DosenRepositoryImpl(supabase)
 
         val authViewModel = AuthViewModel(authRepository)
         val aktivitasViewModel = AktivitasViewModel(aktivitasRepository)
         val referensiViewModel = ReferensiViewModel(referensiRepository)
+        val dosenViewModel = DosenViewModel(dosenRepository)
 
         setContent {
             AksaTheme {
@@ -45,6 +48,7 @@ class MainActivity : ComponentActivity() {
                         referensiViewModel = referensiViewModel,
                         authRepository = authRepository,
                         catatanRepository = catatanRepository,
+                        dosenViewModel = dosenViewModel
                     )
                 }
             }
