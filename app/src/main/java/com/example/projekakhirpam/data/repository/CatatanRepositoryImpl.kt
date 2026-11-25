@@ -28,7 +28,7 @@ class CatatanRepositoryImpl(
         semester: Int
     ): List<MataKuliahCatatan> {
 
-        return client.from("catatan_mata_kuliah")
+        return client.from("mata_kuliah")
             .select {
                 filter {
                     eq("user_id", uid())
@@ -44,7 +44,7 @@ class CatatanRepositoryImpl(
         semester: Int,
         nama: String
     ) {
-        client.from("catatan_mata_kuliah")
+        client.from("mata_kuliah")
             .insert(
                 MataKuliahInsert(
                     userId = uid(),
@@ -57,7 +57,7 @@ class CatatanRepositoryImpl(
     override suspend fun hapusMataKuliah(
         id: String
     ) {
-        client.from("catatan_mata_kuliah")
+        client.from("mata_kuliah")
             .delete {
                 filter {
                     eq("id", id)

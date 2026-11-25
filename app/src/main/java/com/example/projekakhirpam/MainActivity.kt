@@ -10,7 +10,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.projekakhirpam.core.network.SupabaseProvider
 import com.example.projekakhirpam.data.repository.AktivitasRepositoryImpl
 import com.example.projekakhirpam.data.repository.AuthRepositoryImpl
-import com.example.projekakhirpam.data.repository.DemoCatatanRepository
+import com.example.projekakhirpam.data.repository.CatatanRepositoryImpl
 import com.example.projekakhirpam.data.repository.DemoReferensiRepository
 import com.example.projekakhirpam.presentation.aktivitas.AktivitasViewModel
 import com.example.projekakhirpam.presentation.auth.AuthViewModel
@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
         val authRepository = AuthRepositoryImpl(supabase)
         val aktivitasRepository = AktivitasRepositoryImpl(supabase)
         val referensiRepository = DemoReferensiRepository()
-        val catatanRepository = DemoCatatanRepository()
+        val catatanRepository = CatatanRepositoryImpl(supabase)
 
         val authViewModel = AuthViewModel(authRepository)
         val aktivitasViewModel = AktivitasViewModel(aktivitasRepository)
