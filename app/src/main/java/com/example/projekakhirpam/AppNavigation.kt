@@ -13,6 +13,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.projekakhirpam.presentation.dosen.DosenDetailScreen
+import com.example.projekakhirpam.presentation.dosen.DosenFormScreen
+import com.example.projekakhirpam.presentation.dosen.DosenListScreen
+import com.example.projekakhirpam.presentation.dosen.DosenViewModel
 import com.example.projekakhirpam.domain.repository.AuthRepository
 import com.example.projekakhirpam.domain.repository.CatatanRepository
 import com.example.projekakhirpam.presentation.aktivitas.*
@@ -25,8 +30,14 @@ import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiDetailS
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiFormScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiListScreen
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
+import com.example.projekakhirpam.presentation.jadwal.JadwalDetailScreen
+import com.example.projekakhirpam.presentation.jadwal.JadwalFormScreen
+import com.example.projekakhirpam.presentation.jadwal.JadwalListScreen
+import com.example.projekakhirpam.presentation.jadwal.JadwalUiState
+import com.example.projekakhirpam.presentation.jadwal.JadwalViewModel
 import com.example.projekakhirpam.presentation.profile.ProfileScreen
 import com.example.projekakhirpam.presentation.components.AksaBottomNavigation
+import com.example.projekakhirpam.presentation.tugas.*
 
 @Composable
 fun AppNavigation(
@@ -35,7 +46,10 @@ fun AppNavigation(
     aktivitasViewModel: AktivitasViewModel,
     referensiViewModel: ReferensiViewModel,
     authRepository: AuthRepository,
-    catatanRepository: CatatanRepository
+    catatanRepository: CatatanRepository,
+    dosenViewModel: DosenViewModel = viewModel(),
+    tugasViewModel: TugasViewModel = viewModel(factory = TugasViewModel.Factory),
+    jadwalViewModel: JadwalViewModel = viewModel(factory = JadwalViewModel.Factory)
 ) {
     var isLoading by remember { mutableStateOf(true) }
     var startDestination by remember { mutableStateOf("welcome") }
@@ -100,6 +114,8 @@ fun AppNavigation(
                     onLoginSuccess = {
                         aktivitasViewModel.loadAktivitas()
                         referensiViewModel.loadReferensi()
+                        dosenViewModel.loadDosen()
+                        jadwalViewModel.loadJadwalList()
                         navController.navigate("home") {
                             popUpTo("welcome") { inclusive = true }
                         }
@@ -116,6 +132,7 @@ fun AppNavigation(
                     onSignUpSuccess = {
                         aktivitasViewModel.loadAktivitas()
                         referensiViewModel.loadReferensi()
+                        jadwalViewModel.loadJadwalList()
                         navController.navigate("home") {
                             popUpTo("welcome") { inclusive = true }
                         }
@@ -208,7 +225,9 @@ fun AppNavigation(
 
             // --- FITUR AKTIVITAS KAMPUS ---
             composable("aktivitas_list") {
+                val aktivitasState by aktivitasViewModel.uiState.collectAsState()
                 AktivitasListScreen(
+                    state = aktivitasState,
                     viewModel = aktivitasViewModel,
                     onAddClick = { navController.navigate("aktivitas_form") },
                     onItemClick = { item -> navController.navigate("aktivitas_detail/${item.id}") },
@@ -261,9 +280,161 @@ fun AppNavigation(
             }
 
             // --- PLACEHOLDER FITUR TEMAN KELOMPOK LAIN (FITUR 1-4) ---
-            composable("tugas_list") { PlaceholderScreen("Manajemen Tugas Kuliah") }
-            composable("jadwal_list") { PlaceholderScreen("Jadwal Perkuliahan") }
-            composable("dosen_list") { PlaceholderScreen("Direktori Dosen") }
+            // --- FITUR 1: MANAJEMEN TUGAS KULIAH ---
+            composable("tugas_list") {
+                TugasListScreen(
+                    viewModel = tugasViewModel,
+                    onAddClick = { navController.navigate("tugas_form") },
+                    onItemClick = { item -> navController.navigate("tugas_detail/${item.id}") },
+                    onProfileClick = { navigateToMain("profile") }
+                )
+            }
+            composable("tugas_form") {
+                TugasFormScreen(
+                    viewModel = tugasViewModel,
+                    onSaved = { navController.popBackStack() },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("tugas_detail/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id")
+                val state by tugasViewModel.uiState.collectAsState()
+                PesanErrorToast(tugasViewModel)
+                val tugas = (state as? TugasUiState.Success)?.list?.find { it.id == id }
+                if (tugas != null) {
+                    TugasDetailScreen(
+                        tugas = tugas,
+                        onEditClick = { navController.navigate("tugas_edit/${tugas.id}") },
+                        onDeleteClick = {
+                            tugas.id?.let { itemId ->
+                                tugasViewModel.deleteTugas(itemId) { navController.popBackStack() }
+                            }
+                        },
+                        onStatusChange = { statusBaru -> tugasViewModel.ubahStatus(tugas, statusBaru) },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (state is TugasUiState.Success) Text("Tugas tidak ditemukan")
+                        else CircularProgressIndicator()
+                    }
+                }
+            }
+            composable("tugas_edit/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id")
+                val state by tugasViewModel.uiState.collectAsState()
+                val tugas = (state as? TugasUiState.Success)?.list?.find { it.id == id }
+                if (tugas != null) {
+                    TugasFormScreen(
+                        viewModel = tugasViewModel,
+                        initialData = tugas,
+                        onSaved = { navController.popBackStack() },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+            }
+
+            composable("jadwal_list") {
+                JadwalListScreen(
+                    onAddClick = { navController.navigate("jadwal_form") },
+                    onItemClick = { item -> navController.navigate("jadwal_detail/${item.id}") },
+                    onProfileClick = { navigateToMain("profile") },
+                    onNavigateRoute = { route -> navigateToMain(route) },
+                    viewModel = jadwalViewModel
+                )
+            }
+            composable("jadwal_form") {
+                JadwalFormScreen(
+                    onSubmit = { item ->
+                        jadwalViewModel.addJadwal(item) { navController.popBackStack() }
+                    },
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("jadwal_detail/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id").orEmpty()
+                val state by jadwalViewModel.uiState.collectAsState()
+                val jadwal = (state as? JadwalUiState.Success)?.list?.find { it.id == id }
+                if (jadwal != null) {
+                    JadwalDetailScreen(
+                        item = jadwal,
+                        viewModel = jadwalViewModel,
+                        onEditClick = { navController.navigate("jadwal_edit/${jadwal.id}") },
+                        onDeleteClick = {
+                            jadwalViewModel.deleteJadwal(jadwal.id) { navController.popBackStack() }
+                        },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (state is JadwalUiState.Success) Text("Jadwal tidak ditemukan")
+                        else CircularProgressIndicator()
+                    }
+                }
+            }
+            composable("jadwal_edit/{id}") { backStackEntry ->
+                val id = backStackEntry.arguments?.getString("id").orEmpty()
+                val state by jadwalViewModel.uiState.collectAsState()
+                val jadwal = (state as? JadwalUiState.Success)?.list?.find { it.id == id }
+                if (jadwal != null) {
+                    JadwalFormScreen(
+                        initialData = jadwal,
+                        onSubmit = { updated ->
+                            jadwalViewModel.updateJadwal(id, updated) { navController.popBackStack() }
+                        },
+                        onBackClick = { navController.popBackStack() }
+                    )
+                } else {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        if (state is JadwalUiState.Success) Text("Jadwal tidak ditemukan")
+                        else CircularProgressIndicator()
+                    }
+                }
+            }
+            // --- FITUR 4: DIREKTORI DOSEN ---
+            composable("dosen_list") {
+                DosenListScreen(
+                    viewModel = dosenViewModel,
+                    onNavigateToDetail = { dosenId ->
+                        navController.navigate("dosen_detail/$dosenId")
+                    },
+                    onNavigateToAdd = {
+                        navController.navigate("dosen_form")
+                    },
+                    onProfileClick = { navigateToMain("profile") },
+                    onNavigateRoute = { route -> navigateToMain(route) }
+                )
+            }
+            composable("dosen_detail/{id}") { backStackEntry ->
+                val dosenId = backStackEntry.arguments?.getString("id").orEmpty()
+                DosenDetailScreen(
+                    dosenId = dosenId,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { editId ->
+                        navController.navigate("dosen_form?id=$editId")
+                    }
+                )
+            }
+            composable("dosen_form?id={id}") { backStackEntry ->
+                val dosenId = backStackEntry.arguments?.getString("id")
+                DosenFormScreen(
+                    dosenId = dosenId,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable("dosen_form") {
+                DosenFormScreen(
+                    dosenId = null,
+                    viewModel = dosenViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
         }
             if (showMainNavigation) {
                 AksaBottomNavigation(

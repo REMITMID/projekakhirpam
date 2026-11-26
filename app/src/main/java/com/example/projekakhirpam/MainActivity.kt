@@ -7,15 +7,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.projekakhirpam.core.network.SupabaseProvider
 import com.example.projekakhirpam.data.repository.AktivitasRepositoryImpl
 import com.example.projekakhirpam.data.repository.AuthRepositoryImpl
 import com.example.projekakhirpam.data.repository.CatatanRepositoryImpl
 import com.example.projekakhirpam.data.repository.DemoReferensiRepository
+import com.example.projekakhirpam.data.repository.DosenRepositoryImpl
 import com.example.projekakhirpam.presentation.aktivitas.AktivitasViewModel
 import com.example.projekakhirpam.presentation.auth.AuthViewModel
+import com.example.projekakhirpam.presentation.dosen.DosenViewModel
 import com.example.projekakhirpam.presentation.koleksireferensi.ReferensiViewModel
+import com.example.projekakhirpam.presentation.theme.AksaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,13 +30,15 @@ class MainActivity : ComponentActivity() {
         val aktivitasRepository = AktivitasRepositoryImpl(supabase)
         val referensiRepository = DemoReferensiRepository()
         val catatanRepository = CatatanRepositoryImpl(supabase)
+        val dosenRepository = DosenRepositoryImpl(supabase)
 
         val authViewModel = AuthViewModel(authRepository)
         val aktivitasViewModel = AktivitasViewModel(aktivitasRepository)
         val referensiViewModel = ReferensiViewModel(referensiRepository)
+        val dosenViewModel = DosenViewModel(dosenRepository)
 
         setContent {
-            MaterialTheme {
+            AksaTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -44,7 +50,8 @@ class MainActivity : ComponentActivity() {
                         aktivitasViewModel = aktivitasViewModel,
                         referensiViewModel = referensiViewModel,
                         authRepository = authRepository,
-                        catatanRepository = catatanRepository
+                        catatanRepository = catatanRepository,
+                        dosenViewModel = dosenViewModel
                     )
                 }
             }

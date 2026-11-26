@@ -18,13 +18,13 @@ import com.example.projekakhirpam.domain.model.AktivitasKampus
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AktivitasListScreen(
+    state: AktivitasUiState,
     viewModel: AktivitasViewModel,
     onAddClick: () -> Unit,
     onItemClick: (AktivitasKampus) -> Unit,
     onProfileClick: () -> Unit,
     onNavigateRoute: (String) -> Unit
 ) {
-    val state by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
