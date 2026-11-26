@@ -114,6 +114,8 @@ fun AppNavigation(
                     onLoginSuccess = {
                         aktivitasViewModel.loadAktivitas()
                         referensiViewModel.loadReferensi()
+                        dosenViewModel.loadDosen()
+                        jadwalViewModel.loadJadwalList()
                         navController.navigate("home") {
                             popUpTo("welcome") { inclusive = true }
                         }
@@ -130,6 +132,7 @@ fun AppNavigation(
                     onSignUpSuccess = {
                         aktivitasViewModel.loadAktivitas()
                         referensiViewModel.loadReferensi()
+                        jadwalViewModel.loadJadwalList()
                         navController.navigate("home") {
                             popUpTo("welcome") { inclusive = true }
                         }
@@ -222,7 +225,9 @@ fun AppNavigation(
 
             // --- FITUR AKTIVITAS KAMPUS ---
             composable("aktivitas_list") {
+                val aktivitasState by aktivitasViewModel.uiState.collectAsState()
                 AktivitasListScreen(
+                    state = aktivitasState,
                     viewModel = aktivitasViewModel,
                     onAddClick = { navController.navigate("aktivitas_form") },
                     onItemClick = { item -> navController.navigate("aktivitas_detail/${item.id}") },
@@ -357,6 +362,7 @@ fun AppNavigation(
                 if (jadwal != null) {
                     JadwalDetailScreen(
                         item = jadwal,
+                        viewModel = jadwalViewModel,
                         onEditClick = { navController.navigate("jadwal_edit/${jadwal.id}") },
                         onDeleteClick = {
                             jadwalViewModel.deleteJadwal(jadwal.id) { navController.popBackStack() }
