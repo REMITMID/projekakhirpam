@@ -2,14 +2,15 @@ package com.example.projekakhirpam.presentation.koleksireferensi
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.projekakhirpam.domain.model.Referensi
 
@@ -25,8 +26,12 @@ fun ReferensiListScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
 
+    LaunchedEffect(Unit) {
+        viewModel.loadReferensi()
+    }
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Koleksi Referensi") }) },
+        topBar = { TopAppBar(title = { Text("Koleksi Referensi", fontWeight = FontWeight.Bold) }) },
         floatingActionButton = {
             FloatingActionButton(onClick = onNavigateToAdd) {
                 Icon(Icons.Default.Add, contentDescription = "Tambah Referensi")
@@ -40,11 +45,21 @@ fun ReferensiListScreen(
         ) {
             when {
                 isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                error != null -> Text(
-                    text = error ?: "Gagal memuat referensi",
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                error != null -> Column(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = error ?: "Gagal memuat referensi",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Button(onClick = { viewModel.loadReferensi() }) {
+                        Text("Coba Lagi")
+                    }
+                }
                 referensiList.isEmpty() -> Text(
                     text = "Belum ada referensi. Tekan + untuk menambahkan.",
                     modifier = Modifier.align(Alignment.Center)
@@ -52,11 +67,11 @@ fun ReferensiListScreen(
                 else -> LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(16.dp)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(referensiList) { referensi ->
+                    items(referensiList, key = { it.id }) { referensi ->
                         ReferensiCard(referensi = referensi, onClick = { onNavigateToDetail(referensi.id) })
-                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
             }
@@ -70,12 +85,19 @@ fun ReferensiCard(referensi: Referensi, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = referensi.judul, style = MaterialTheme.typography.titleMedium)
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(text = referensi.judul, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text(text = "Penulis: ${referensi.penulis}", style = MaterialTheme.typography.bodyMedium)
-            Text(text = "Kategori: ${referensi.kategori}", style = MaterialTheme.typography.labelMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (referensi.kategori.isNotBlank()) {
+                    Text(text = "Kategori: ${referensi.kategori}", style = MaterialTheme.typography.labelMedium)
+                }
+                if (referensi.tahunTerbit.isNotBlank()) {
+                    Text(text = "Tahun: ${referensi.tahunTerbit}", style = MaterialTheme.typography.labelMedium)
+                }
+            }
         }
     }
 }
